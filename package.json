@@ -1,0 +1,16 @@
+{
+  "name": "frontmatter-edit",
+  "version": "1.0.0",
+  "type": "module",
+  "devDependencies": {
+    "@types/async": "^3.2.18",
+    "bun-types": "^0.5.0"
+  },
+  "dependencies": {
+    "async": "^3.2.4",
+    "to-vfile": "^7.2.4",
+    "vfile": "^5.3.7",
+    "vfile-matter": "^4.0.1",
+    "yaml": "^2.2.1"
+  }
+}
