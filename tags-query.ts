@@ -6,10 +6,11 @@ import { matter } from "vfile-matter";
 import { read } from "to-vfile";
 import async from "async";
 
+import { DefaultDict } from "./lib/DefaultDict.js";
 import { filelist } from "./lib/filelist.js";
 import { FileListItem, Frontmatter } from "./lib/types.js";
 import { isEmpty } from "./lib/helpers.js";
-import { DefaultDict } from "./lib/DefaultDict.js";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter";
 
 if (argv.length < 3) {
   console.error("Usage: bun tags-query <folder>");
@@ -21,7 +22,7 @@ console.info(`posts_dir: [${posts_dir}]`);
 const files = await filelist(posts_dir, {
   filter: (name: string) => name.endsWith(".md") || name.endsWith(".mdx"),
 });
-console.log(files);
+// console.log(files);
 
 async.mapLimit(
   files,
@@ -41,16 +42,28 @@ async.mapLimit(
         return vfile;
       })
       .then((vfile) => {
-        // debug printer
+        // transformer
         if (vfile.data.skip) {
           return vfile;
         }
 
-        const { orig, matter } = vfile.data;
-        console.log(`${inspect(orig)} => ${inspect(matter)}`);
-        console.log("=======================");
+        let frontmatter = vfile.data.matter as Frontmatter;
+        frontmatter = normalize_frontmatter(frontmatter);
+        vfile.data.matter = frontmatter;
+
         return vfile;
       });
+    // .then((vfile) => {
+    //   // debug printer
+    //   if (vfile.data.skip) {
+    //     return vfile;
+    //   }
+
+    //   const { orig, matter } = vfile.data;
+    //   console.log(`${inspect(orig)} => ${inspect(matter)}`);
+    //   console.log("=======================");
+    //   return vfile;
+    // });
   },
   (err, vfiles) => {
     if (err) throw err;

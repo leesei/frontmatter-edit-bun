@@ -14,7 +14,7 @@ import { filelist } from "./lib/filelist.js";
 import { FileListItem, Frontmatter } from "./lib/types.js";
 import { isEmpty } from "./lib/helpers.js";
 import { post_cleanup_2023 } from "./lib/post_cleanup_2023_03";
-import { sort_frontmatter_keys } from "./lib/sort_frontmatter_keys";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter";
 
 if (argv.length < 3) {
   console.error(`Usage: bun batch-cleanup <file|folder>`);
@@ -26,7 +26,7 @@ console.info(`posts_dir: [${posts_dir}]`);
 const files = await filelist(posts_dir, {
   filter: (name: string) => name.endsWith(".md") || name.endsWith(".mdx"),
 });
-console.log(files);
+// console.log(files);
 
 async.mapLimit(
   files,
@@ -53,7 +53,7 @@ async.mapLimit(
 
         let frontmatter = vfile.data.matter as Frontmatter;
         frontmatter = post_cleanup_2023(frontmatter);
-        frontmatter = sort_frontmatter_keys(frontmatter);
+        frontmatter = normalize_frontmatter(frontmatter);
         vfile.data.matter = frontmatter;
 
         return vfile;
@@ -74,6 +74,8 @@ async.mapLimit(
         if (vfile.data.skip) {
           return vfile;
         }
+        // console.log(yaml.stringify(vfile.data.matter));
+        // return vfile;
 
         // write vfile to disk
         // await mkdir(vfile.dirname, { recursive: true });

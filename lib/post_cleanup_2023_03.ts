@@ -16,6 +16,9 @@ export function post_cleanup_2023(matter: Frontmatter): Frontmatter {
   // remove time from `date` field
   matter.date = matter.date.split(" ")[0];
 
+  // matter.pubDatetime = matter.date;
+  // delete matter.date;
+
   // remove `toc` field
   delete matter.toc;
 
