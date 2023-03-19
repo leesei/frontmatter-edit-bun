@@ -1,5 +1,4 @@
 import { tags_to_valid_set } from "./helpers.js";
-import { Frontmatter } from "./types.js";
 
 export type Frontmatter_2023_03 = {
   title: string;

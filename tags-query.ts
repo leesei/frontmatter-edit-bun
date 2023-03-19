@@ -21,11 +21,6 @@ parser.add_argument("-w", "--write", {
   action: "store_true",
   help: "whether to write the cleaned up frontmatter back to the file",
 });
-parser.add_argument("-o", "--out", {
-  metavar: "FOLDER",
-  default: "./out",
-  help: "if `write` is specified, output a copy of files in `FOLDER`; set folder as `-` to overwrite the input files",
-});
 parser.add_argument("in", {
   metavar: "INPUT",
   help: "input file or folder",
