@@ -1,29 +1,27 @@
+import { tags_to_valid_set } from "./helpers.js";
+import { PostFrontmatter } from "./schema.js";
 import { Frontmatter } from "./types.js";
 
 // sort keys in `frontmatter` object
-// also fill defaults values that matches `blogSchema`
+// make `tags` unique and sorted
 export const normalize_frontmatter = ({
   title,
-  date,
   description = "",
-  postSlug = "",
-  ogImage = "",
+  type, // optional in post
+  ogImage, // optional in post
+  created,
+  updated, // optional in post
   tags,
   ...rest
 }: Frontmatter) => {
-  if (tags == null) {
-    tags = [];
-  } else {
-    // filter our empty/null tags
-    tags = tags.filter(Boolean);
-  }
   return {
     title,
-    date,
     description,
-    postSlug,
-    ogImage,
-    tags,
+    ...(type ? { type } : {}),
+    ...(ogImage ? { ogImage } : {}),
+    created,
+    ...(updated ? { updated } : {}),
+    tags: [...tags_to_valid_set(tags)].sort(),
     ...rest,
-  };
+  } as PostFrontmatter;
 };

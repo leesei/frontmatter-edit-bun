@@ -1,34 +1,41 @@
+import { tags_to_valid_set } from "./helpers.js";
 import { Frontmatter } from "./types.js";
 
-export function post_cleanup_2023(matter: Frontmatter): Frontmatter {
-  // trim `tags`
-  matter.tags = matter.tags
-    ? matter.tags.filter((tag: string | null) => tag)
-    : [];
+export type Frontmatter_2023_03 = {
+  title: string;
+  categories?: string[];
+  tags?: string[];
+  date: string;
+  [x: string]: unknown;
+};
 
-  if (matter.categories) {
-    // move `categories` into `tags`, make them leading
-    // console.log(frontmatter.categories, frontmatter.tags);
-    matter.tags = matter.categories.concat(matter.tags);
-    delete matter.categories;
-  }
+export function post_cleanup(matter: Frontmatter_2023_03) {
+  // picked fields may be removed
+  // remove `toc` field
+  let { date, categories, tags, toc, ...rest } = matter;
 
   // remove time from `date` field
-  matter.date = matter.date.split(" ")[0];
+  const created = date.split(" ")[0];
 
-  // matter.pubDatetime = matter.date;
-  // delete matter.date;
+  // trim `tags`
+  tags = tags ? tags : [];
 
-  // remove `toc` field
-  delete matter.toc;
-
-  // delete "notes" from `tags`
-  matter.tags = matter.tags.filter((tag: string) => tag !== "notes");
-
-  // search "snippet" from `tags` and add `type` field (for Foam)
-  if (matter.tags.find((tag: string) => tag === "snippet")) {
-    matter.type = "snippet";
+  if (categories) {
+    // move `categories` into `tags`, make them leading
+    // console.log(matter.categories, tags);
+    tags = [...categories, ...tags];
   }
 
-  return matter;
+  // make `tags` unique
+  const tags_set = tags_to_valid_set(tags);
+  // delete "notes" from `tags`
+  tags_set.delete("notes");
+
+  return {
+    ...rest,
+    tags: [...tags_set],
+    created,
+    // add `type` field for "snippet" (for Foam)
+    ...(tags_set.has("snippet") ? { type: "snippet" } : {}),
+  };
 }

@@ -5,8 +5,9 @@ export type FileListItem = {
 
 export type Frontmatter = {
   title: string;
-  categories?: string[];
-  tags?: string[];
-  date: string;
+  tags: string[];
+  created: string;
+  updated?: string;
+  type?: string;
   [x: string]: unknown;
 };

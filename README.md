@@ -14,9 +14,12 @@ Like `unified`, this repo provides sample and framework for you to write your ow
 
 ## Rationale
 
+- Tried `py-obsidianmd` first  
+  it doesn't support my flow of updating frontmatter  
+  but the construction of Notes collection and filter can be incorporated
 - Tried `unified` pipeline  
-  `remark-stringify` changes the post content and is disqualified
-- `vfile-matter` and `vfile`  
+  `remark-stringify` changes the post content and it is disqualified
+- `vfile` and `vfile-matter`  
   does not provide API to modify frontmatter and update file  
   write file with `yaml.stringfy()`
 - `gray-matter` fits my purpose in first glance, but
@@ -24,9 +27,6 @@ Like `unified`, this repo provides sample and framework for you to write your ow
     [Disable date parsing? · Issue #62 · jonschlinkert/gray-matter](https://github.com/jonschlinkert/gray-matter/issues/62)
   - `gray-matter.stringify()` clones frontmatter and messed up my ordering
   - dependency `js-yaml` is too old and does not provide customization
-- Also tried `py-obsidianmd`  
-  it doesn't support my flow of updating frontmatter  
-  but the construction of Notes collection and filter can be incorporated
 
 ## Reference
 
@@ -39,3 +39,6 @@ Like `unified`, this repo provides sample and framework for you to write your ow
 use `unified-engine`?
 [unified-args - unified](https://unifiedjs.com/explore/package/unified-args/)
 [unified-engine - unified](https://unifiedjs.com/explore/package/unified-engine/)
+
+use foam as library?
+[foam/packages/foam-vscode at master · foambubble/foam](https://github.com/foambubble/foam/tree/master/packages/foam-vscode)

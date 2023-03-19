@@ -1,25 +1,40 @@
 #!/usr/bin/env bun
 
-import { argv } from "node:process";
+const { ArgumentParser } = require("argparse");
 import { inspect } from "node:util";
 import { matter } from "vfile-matter";
 import { read } from "to-vfile";
 import async from "async";
 
-import { DefaultDict } from "./lib/DefaultDict.js";
-import { filelist } from "./lib/filelist.js";
-import { FileListItem, Frontmatter } from "./lib/types.js";
-import { isEmpty } from "./lib/helpers.js";
+import { PostFrontmatter } from "./lib/schema";
+import { DefaultDict } from "./lib/DefaultDict";
+import { filelist } from "./lib/filelist";
+import { FileListItem, Frontmatter } from "./lib/types";
+import { isEmpty } from "./lib/helpers";
 import { normalize_frontmatter } from "./lib/normalize_frontmatter";
 
-if (argv.length < 3) {
-  console.error("Usage: bun tags-query <folder>");
-  process.exit(1);
-}
-const posts_dir = argv.at(-1) as string;
-console.info(`posts_dir: [${posts_dir}]`);
+const parser = new ArgumentParser({
+  description: "Batch clean up frontmatters in posts.",
+});
+parser.add_argument("-w", "--write", {
+  default: false,
+  action: "store_true",
+  help: "whether to write the cleaned up frontmatter back to the file",
+});
+parser.add_argument("-o", "--out", {
+  metavar: "FOLDER",
+  default: "./out",
+  help: "if `write` is specified, output a copy of files in `FOLDER`; set folder as `-` to overwrite the input files",
+});
+parser.add_argument("in", {
+  metavar: "INPUT",
+  help: "input file or folder",
+});
+let args = parser.parse_args();
+console.log(inspect(args));
+// process.exit(0);
 
-const files = await filelist(posts_dir, {
+const files = await filelist(args.in, {
   filter: (name: string) => name.endsWith(".md") || name.endsWith(".mdx"),
 });
 // console.log(files);
@@ -47,9 +62,8 @@ async.mapLimit(
           return vfile;
         }
 
-        let frontmatter = vfile.data.matter as Frontmatter;
-        frontmatter = normalize_frontmatter(frontmatter);
-        vfile.data.matter = frontmatter;
+        let frontmatter = vfile.data.matter as PostFrontmatter;
+        vfile.data.matter = normalize_frontmatter(frontmatter);
 
         return vfile;
       });
@@ -60,7 +74,7 @@ async.mapLimit(
     //   }
 
     //   const { orig, matter } = vfile.data;
-    //   console.log(`${inspect(orig)} => ${inspect(matter)}`);
+    //   console.log(`${inspect(orig)}\n=> ${inspect(matter)}`);
     //   console.log("=======================");
     //   return vfile;
     // });
