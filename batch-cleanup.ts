@@ -12,9 +12,9 @@ import yaml from "yaml";
 
 import { filelist } from "./lib/filelist";
 import { FileListItem } from "./lib/types";
-import { Frontmatter_2023_03, post_cleanup } from "./lib/post_cleanup_2023_03";
 import { isEmpty } from "./lib/helpers";
 import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import { PostFrontmatter } from "./lib/schema.js";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
@@ -65,9 +65,8 @@ async.mapLimit(
           return vfile;
         }
 
-        vfile.data.matter = normalize_frontmatter(
-          post_cleanup(vfile.data.matter as Frontmatter_2023_03)
-        );
+        let frontmatter = vfile.data.matter as PostFrontmatter;
+        vfile.data.matter = normalize_frontmatter(frontmatter);
 
         return vfile;
       })
