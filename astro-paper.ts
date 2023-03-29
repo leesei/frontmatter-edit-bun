@@ -1,20 +1,19 @@
 #!/usr/bin/env bun
 
 const { ArgumentParser } = require("argparse");
-import { inspect } from "node:util";
-import { matter } from "vfile-matter";
-import { mkdir, writeFile } from "node:fs/promises";
-import { read } from "to-vfile";
-import { resolve } from "node:path";
-import { VFile } from "vfile";
 import async from "async";
+import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { inspect, isDeepStrictEqual } from "node:util";
+import { read } from "to-vfile";
+import { VFile } from "vfile";
+import { matter } from "vfile-matter";
 import yaml from "yaml";
 
-import { filelist } from "./lib/filelist";
-import { FileListItem } from "./lib/types";
 import { Frontmatter_astro_paper, post_cleanup } from "./lib/astro_paper.js";
-import { isEmpty } from "./lib/helpers";
+import { filelist } from "./lib/filelist";
 import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import { FileListItem } from "./lib/types";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
@@ -51,7 +50,7 @@ async.mapLimit(
       .then((vfile) => {
         // file reader
         matter(vfile, { strip: true });
-        if (isEmpty(vfile.data.matter as Object)) {
+        if (isDeepStrictEqual(vfile.data.matter, {})) {
           vfile.data.skip = true;
         }
 

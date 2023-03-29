@@ -1,20 +1,19 @@
 #!/usr/bin/env bun
 
 const { ArgumentParser } = require("argparse");
-import { inspect } from "node:util";
-import { matter } from "vfile-matter";
-import { mkdir, writeFile } from "node:fs/promises";
-import { read } from "to-vfile";
-import { resolve } from "node:path";
-import { VFile } from "vfile";
 import async from "async";
+import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { inspect, isDeepStrictEqual } from "node:util";
+import { read } from "to-vfile";
+import { VFile } from "vfile";
+import { matter } from "vfile-matter";
 import yaml from "yaml";
 
 import { filelist } from "./lib/filelist";
-import { FileListItem } from "./lib/types";
-import { isEmpty } from "./lib/helpers";
 import { normalize_frontmatter } from "./lib/normalize_frontmatter";
 import { PostFrontmatter } from "./lib/schema.js";
+import { FileListItem } from "./lib/types";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
@@ -51,10 +50,8 @@ async.mapLimit(
       .then((vfile) => {
         // file reader
         matter(vfile, { strip: true });
-        if (isEmpty(vfile.data.matter as Object)) {
-          vfile.data.skip = true;
-        }
-
+        vfile.data.skip = isDeepStrictEqual(vfile.data.matter, {});
+        vfile.data.write = args.write;
         // make a copy of the original frontmatter
         vfile.data.orig = Object.assign({}, vfile.data.matter);
         return vfile;
@@ -67,6 +64,15 @@ async.mapLimit(
 
         let frontmatter = vfile.data.matter as PostFrontmatter;
         vfile.data.matter = normalize_frontmatter(frontmatter);
+        // whether we need to write the file back to disk
+        // this is not good enough
+        // the parsed yaml is already different from the yaml frontmatter
+        // which may yield a false positive
+        // https://github.com/vfile/vfile-matter/issues/5
+        // vfile.data.write = vfile.data.write && !isDeepStrictEqual(
+        //   vfile.data.orig,
+        //   vfile.data.matter
+        // );
 
         return vfile;
       })
@@ -79,15 +85,16 @@ async.mapLimit(
         const { orig, matter } = vfile.data;
         console.log(`${inspect(orig)}\n=> ${inspect(matter)}`);
         console.log("=======================");
+
+        // console.log(yaml.stringify(vfile.data.matter));
+        // console.log("=======================");
         return vfile;
       })
       .then(async (vfile) => {
         // writer
-        if (vfile.data.skip || !args.write) {
+        if (vfile.data.skip || !vfile.data.write) {
           return vfile;
         }
-        // console.log(yaml.stringify(vfile.data.matter));
-        // return vfile;
 
         // write vfile to disk
         let out_path = vfile.path;
@@ -113,7 +120,12 @@ async.mapLimit(
   (err, vfiles) => {
     if (err) throw err;
     // filter out nulls
-    vfiles = (vfiles as VFile[]).filter((vfile) => vfile && !vfile.data.skip);
+    const vfiles_processed = (vfiles as VFile[]).filter(
+      (vfile) => vfile && !vfile.data.skip
+    );
+    const vfiles_written = vfiles_processed.filter(
+      (vfile) => vfile && vfile.data.write
+    );
     if (args.write) {
       console.log(
         args.out != "-"
@@ -121,7 +133,9 @@ async.mapLimit(
           : `output folder: (same as input)`
       );
     }
-    console.log(`files: ${files.length}, processed: ${vfiles.length}`);
+    console.log(
+      `files: ${files.length}, processed: ${vfiles_processed.length}, written: ${vfiles_written.length}`
+    );
     // console.log(contents.map((vfile) => vfile!.data.name).sort());
   }
 );

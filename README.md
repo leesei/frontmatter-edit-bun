@@ -28,6 +28,15 @@ Like `unified`, this repo provides sample and framework for you to write your ow
   - `gray-matter.stringify()` clones frontmatter and messed up my ordering
   - dependency `js-yaml` is too old and does not provide customization
 
+## TODO
+
+- fluent API like `unified`
+- "comp.lang" -> "comp/language", "comp/dev"
+- "comp.hardware" -> "comp/hardware"
+- "web-\*" -> "web/\*"
+- "\*/runtime" -> "runtime/\*"?  
+  not needed if we have tags search
+
 ## Reference
 
 [vfile - unified](https://unifiedjs.com/explore/package/vfile/)  

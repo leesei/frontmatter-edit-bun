@@ -1,17 +1,16 @@
 #!/usr/bin/env bun
 
 const { ArgumentParser } = require("argparse");
-import { inspect } from "node:util";
-import { matter } from "vfile-matter";
-import { read } from "to-vfile";
 import async from "async";
+import { inspect, isDeepStrictEqual } from "node:util";
+import { read } from "to-vfile";
+import { matter } from "vfile-matter";
 
-import { PostFrontmatter } from "./lib/schema";
 import { DefaultDict } from "./lib/DefaultDict";
 import { filelist } from "./lib/filelist";
-import { FileListItem, Frontmatter } from "./lib/types";
-import { isEmpty } from "./lib/helpers";
 import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import { PostFrontmatter } from "./lib/schema";
+import { FileListItem, Frontmatter } from "./lib/types";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
@@ -43,7 +42,7 @@ async.mapLimit(
       .then((vfile) => {
         // file reader
         matter(vfile, { strip: true });
-        if (isEmpty(vfile.data.matter as Object)) {
+        if (isDeepStrictEqual(vfile.data.matter, {})) {
           vfile.data.skip = true;
         }
 
@@ -87,7 +86,7 @@ async.mapLimit(
     for (const vfile of vfiles) {
       const { matter } = vfile!.data;
       const { tags } = matter as Frontmatter;
-      for (const tag of tags!) {
+      for (const tag of tags) {
         tags_to_posts.get(tag)!.add(vfile?.basename as string);
       }
     }
@@ -96,7 +95,7 @@ async.mapLimit(
     const filtered = vfiles!.filter((vfile) => {
       const { matter } = vfile!.data;
       const { tags } = matter as Frontmatter;
-      return tags!.includes("games") && tags!.includes("python");
+      return tags.includes("games") && tags.includes("python");
     });
     console.log(filtered.map((vfile) => vfile!.basename).sort());
   }

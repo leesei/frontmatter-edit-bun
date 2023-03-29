@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
-import { readdir, lstat, access } from "node:fs/promises";
+import { access, lstat, readdir } from "node:fs/promises";
+import { basename, resolve } from "node:path";
 import { FileListItem } from "./types.js";
-import { resolve, basename } from "node:path";
 
 export async function filelist(
   path: string,
