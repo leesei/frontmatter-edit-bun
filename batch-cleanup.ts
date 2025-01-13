@@ -10,10 +10,10 @@ import { VFile } from "vfile";
 import { matter } from "vfile-matter";
 import yaml from "yaml";
 
-import { filelist } from "./lib/filelist";
-import { normalize_frontmatter } from "./lib/normalize_frontmatter";
-import { PostFrontmatter } from "./lib/schema.js";
-import { FileListItem } from "./lib/types";
+import { filelist } from "./lib/filelist.ts";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
+import { PostFrontmatter } from "./lib/schema.ts";
+import { FileListItem } from "./lib/types.ts";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
@@ -21,11 +21,12 @@ const parser = new ArgumentParser({
 parser.add_argument("-w", "--write", {
   default: false,
   action: "store_true",
-  help: "whether to write the cleaned up frontmatter back to the file",
+  help: "whether to write the `md` files with back to a file",
 });
 parser.add_argument("-o", "--out", {
   metavar: "FOLDER",
   default: "./out",
+  nargs: "?",
   help: "if `write` is specified, output a copy of files in `FOLDER`; set folder as `-` to overwrite the input files",
 });
 parser.add_argument("in", {
@@ -65,20 +66,17 @@ async.mapLimit(
         let frontmatter = vfile.data.matter as PostFrontmatter;
         vfile.data.matter = normalize_frontmatter(frontmatter);
         // whether we need to write the file back to disk
-        // this is not good enough
-        // the parsed yaml is already different from the yaml frontmatter
-        // which may yield a false positive
-        // https://github.com/vfile/vfile-matter/issues/5
-        // vfile.data.write = vfile.data.write && !isDeepStrictEqual(
-        //   vfile.data.orig,
-        //   vfile.data.matter
-        // );
+        vfile.data.skip = isDeepStrictEqual(
+          normalize_frontmatter(vfile.data.orig as PostFrontmatter),
+          vfile.data.matter
+        );
 
         return vfile;
       })
       .then((vfile) => {
         // debug printer
         if (vfile.data.skip) {
+          console.log(`${vfile.basename} skipped`);
           return vfile;
         }
 
@@ -105,7 +103,9 @@ async.mapLimit(
         await writeFile(
           out_path,
           "---\n" +
-            yaml.stringify(vfile.data.matter) +
+            yaml.stringify(vfile.data.matter, {
+              lineWidth: 0,
+            }) +
             "---\n" +
             vfile.toString()
         );

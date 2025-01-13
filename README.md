@@ -6,8 +6,15 @@ npm install -g bun # or use package manager
 # install dependencies
 bun install
 
+# normalize frontmatter, report missing fields
 ./batch-cleanup.ts <file|folder>
+# update `updated` in frontmatter according to file's update time
+./update-updated.ts <file|folder>
+# query on tags
 ./tags-query.ts <folder>
+
+# convert default Astro Paper schema to my schema
+./astro-paper <folder>
 ```
 
 Like `unified`, this repo provides sample and framework for you to write your own processing pipeline.
@@ -34,6 +41,7 @@ Like `unified`, this repo provides sample and framework for you to write your ow
 - "comp.lang" -> "comp/language", "comp/dev"
 - "comp.hardware" -> "comp/hardware"
 - "web-\*" -> "web/\*"
+- "dev/deploy" vs "web/deploy"
 - "\*/runtime" -> "runtime/\*"?  
   not needed if we have tags search
 

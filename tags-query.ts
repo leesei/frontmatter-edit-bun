@@ -6,19 +6,14 @@ import { inspect, isDeepStrictEqual } from "node:util";
 import { read } from "to-vfile";
 import { matter } from "vfile-matter";
 
-import { DefaultDict } from "./lib/DefaultDict";
-import { filelist } from "./lib/filelist";
-import { normalize_frontmatter } from "./lib/normalize_frontmatter";
-import { PostFrontmatter } from "./lib/schema";
-import { FileListItem, Frontmatter } from "./lib/types";
+import { DefaultDict } from "./lib/DefaultDict.ts";
+import { filelist } from "./lib/filelist.ts";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
+import { PostFrontmatter } from "./lib/schema.ts";
+import { FileListItem, Frontmatter } from "./lib/types.ts";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
-});
-parser.add_argument("-w", "--write", {
-  default: false,
-  action: "store_true",
-  help: "whether to write the cleaned up frontmatter back to the file",
 });
 parser.add_argument("in", {
   metavar: "INPUT",
@@ -80,6 +75,7 @@ async.mapLimit(
     vfiles = vfiles!.filter((vfile) => vfile && !vfile.data.skip);
     console.log(`files: ${files.length}, processed: ${vfiles.length}`);
 
+    // construct tags to posts mapping
     let tags_to_posts = new DefaultDict<string, Set<string>>(
       () => new Set<string>()
     );
@@ -90,13 +86,41 @@ async.mapLimit(
         tags_to_posts.get(tag)!.add(vfile?.basename as string);
       }
     }
+    console.log("Tags to posts:");
     console.log(tags_to_posts);
+    for (const [tag, posts] of tags_to_posts) {
+      if (/\./.test(tag)) console.log(`${tag}: ${Array.from(posts)}`);
+    }
 
+    console.log("Tags query:");
     const filtered = vfiles!.filter((vfile) => {
       const { matter } = vfile!.data;
       const { tags } = matter as Frontmatter;
-      return tags.includes("games") && tags.includes("python");
+      // do filter or query here
+
+      // test if tags contain upper letters
+      return tags.some((tag) => /[A-Z]/.test(tag));
+
+      // return tags.includes("games") && tags.includes("python");
     });
     console.log(filtered.map((vfile) => vfile!.basename).sort());
+
+    console.log("No tags:");
+    const notags = vfiles!.filter((vfile) => {
+      const { matter } = vfile!.data;
+      const { tags } = matter as Frontmatter;
+      return tags.length === 0;
+    });
+    console.log(notags.map((vfile) => vfile!.basename).sort());
+
+    // console.log();
+    // console.log("No description:");
+    // for (const vfile of vfiles) {
+    //   const { matter } = vfile!.data;
+    //   const { description } = matter as Frontmatter;
+    //   if (!description) {
+    //     console.log(vfile!.basename);
+    //   }
+    // }
   }
 );

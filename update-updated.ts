@@ -2,6 +2,7 @@
 
 const { ArgumentParser } = require("argparse");
 import async from "async";
+import { statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { inspect, isDeepStrictEqual } from "node:util";
@@ -10,22 +11,37 @@ import { VFile } from "vfile";
 import { matter } from "vfile-matter";
 import yaml from "yaml";
 
-import { Frontmatter_astro_paper, post_cleanup } from "./lib/astro_paper.ts";
 import { filelist } from "./lib/filelist.ts";
 import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
+import { PostFrontmatter } from "./lib/schema.ts";
 import { FileListItem } from "./lib/types.ts";
 
+function padZero(num: number, targetLength: number) {
+  return num.toString().padStart(targetLength, "0");
+}
+
+function toISODateString(date: Date) {
+  return (
+    date.getFullYear().toString() +
+    "-" +
+    padZero(date.getMonth() + 1, 2) +
+    "-" +
+    padZero(date.getDate(), 2)
+  );
+}
+
 const parser = new ArgumentParser({
-  description: "Batch clean up frontmatters in Astro posts.",
+  description: "Batch update frontmatter `updated` field in posts.",
 });
 parser.add_argument("-w", "--write", {
   default: false,
   action: "store_true",
-  help: "whether to write the cleaned up frontmatter back to the file",
+  help: "whether to write the `md` files back to a file",
 });
 parser.add_argument("-o", "--out", {
   metavar: "FOLDER",
   default: "./out",
+  nargs: "?",
   help: "if `write` is specified, output a copy of files in `FOLDER`; set folder as `-` to overwrite the input files",
 });
 parser.add_argument("in", {
@@ -50,10 +66,9 @@ async.mapLimit(
       .then((vfile) => {
         // file reader
         matter(vfile, { strip: true });
-        if (isDeepStrictEqual(vfile.data.matter, {})) {
-          vfile.data.skip = true;
-        }
-
+        vfile.data.skip = isDeepStrictEqual(vfile.data.matter, {});
+        vfile.data.write = args.write;
+        vfile.data.modified = statSync(item.path).mtime;
         // make a copy of the original frontmatter
         vfile.data.orig = Object.assign({}, vfile.data.matter);
         return vfile;
@@ -64,9 +79,23 @@ async.mapLimit(
           return vfile;
         }
 
-        vfile.data.matter = normalize_frontmatter(
-          post_cleanup(vfile.data.matter as Frontmatter_astro_paper)
-        );
+        let frontmatter = vfile.data.matter as PostFrontmatter;
+        const orig_isodate = frontmatter.updated || frontmatter.created;
+        const file_isodate = toISODateString(vfile.data.modified as Date);
+        if (orig_isodate < file_isodate) {
+          console.log(orig_isodate, "=>", file_isodate);
+          frontmatter.updated = file_isodate;
+        } else vfile.data.skip = true;
+        vfile.data.matter = normalize_frontmatter(frontmatter);
+        // whether we need to write the file back to disk
+        // this is not good enough
+        // the parsed yaml is already different from the yaml frontmatter
+        // which may yield a false positive
+        // https://github.com/vfile/vfile-matter/issues/5
+        // vfile.data.write = vfile.data.write && !isDeepStrictEqual(
+        //   vfile.data.orig,
+        //   vfile.data.matter
+        // );
 
         return vfile;
       })
@@ -79,15 +108,16 @@ async.mapLimit(
         const { orig, matter } = vfile.data;
         console.log(`${inspect(orig)}\n=> ${inspect(matter)}`);
         console.log("=======================");
+
+        // console.log(yaml.stringify(vfile.data.matter));
+        // console.log("=======================");
         return vfile;
       })
       .then(async (vfile) => {
         // writer
-        if (vfile.data.skip || !args.write) {
+        if (vfile.data.skip || !vfile.data.write) {
           return vfile;
         }
-        // console.log(yaml.stringify(vfile.data.matter));
-        // return vfile;
 
         // write vfile to disk
         let out_path = vfile.path;
@@ -98,7 +128,9 @@ async.mapLimit(
         await writeFile(
           out_path,
           "---\n" +
-            yaml.stringify(vfile.data.matter) +
+            yaml.stringify(vfile.data.matter, {
+              lineWidth: 0,
+            }) +
             "---\n" +
             vfile.toString()
         );
@@ -113,7 +145,12 @@ async.mapLimit(
   (err, vfiles) => {
     if (err) throw err;
     // filter out nulls
-    vfiles = (vfiles as VFile[]).filter((vfile) => vfile && !vfile.data.skip);
+    const vfiles_processed = (vfiles as VFile[]).filter(
+      (vfile) => vfile && !vfile.data.skip
+    );
+    const vfiles_written = vfiles_processed.filter(
+      (vfile) => vfile && vfile.data.write
+    );
     if (args.write) {
       console.log(
         args.out != "-"
@@ -121,7 +158,9 @@ async.mapLimit(
           : `output folder: (same as input)`
       );
     }
-    console.log(`files: ${files.length}, processed: ${vfiles.length}`);
+    console.log(
+      `files: ${files.length}, processed: ${vfiles_processed.length}, written: ${vfiles_written.length}`
+    );
     // console.log(contents.map((vfile) => vfile!.data.name).sort());
   }
 );
