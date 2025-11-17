@@ -3,7 +3,7 @@
 const { ArgumentParser } = require("argparse");
 import async from "async";
 import { statSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, utimes, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { inspect, isDeepStrictEqual } from "node:util";
 import { read } from "to-vfile";
@@ -11,10 +11,10 @@ import { VFile } from "vfile";
 import { matter } from "vfile-matter";
 import yaml from "yaml";
 
-import { filelist } from "./lib/filelist.ts";
-import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
-import { PostFrontmatter } from "./lib/schema.ts";
-import { FileListItem } from "./lib/types.ts";
+import { filelist } from "./lib/filelist";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import type { PostFrontmatter } from "./lib/schema";
+import type { FileListItem } from "./lib/types";
 
 function padZero(num: number, targetLength: number) {
   return num.toString().padStart(targetLength, "0");
@@ -88,7 +88,7 @@ async.mapLimit(
         } else vfile.data.skip = true;
         vfile.data.matter = normalize_frontmatter(frontmatter);
         // whether we need to write the file back to disk
-        // this is not good enough
+        // this detection is not good enough
         // the parsed yaml is already different from the yaml frontmatter
         // which may yield a false positive
         // https://github.com/vfile/vfile-matter/issues/5
@@ -134,6 +134,9 @@ async.mapLimit(
             "---\n" +
             vfile.toString()
         );
+        // restore the modified time
+        const mtime = vfile.data.modified as Date;
+        await utimes(out_path, mtime, mtime);
         return vfile;
       })
       .catch((err) => {
