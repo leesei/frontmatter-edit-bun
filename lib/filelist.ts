@@ -1,7 +1,7 @@
 import { constants } from "node:fs";
 import { access, lstat, readdir } from "node:fs/promises";
 import { basename, resolve } from "node:path";
-import { FileListItem } from "./types.js";
+import type { FileListItem } from "./types.js";
 
 export async function filelist(
   path: string,
@@ -13,6 +13,7 @@ export async function filelist(
   await access(path, constants.F_OK);
 
   const st = await lstat(path);
+  // input is a file, return single-item list
   if (st.isFile()) {
     if (options?.filter ? options.filter(basename(path)) : true)
       return [

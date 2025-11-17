@@ -7,7 +7,7 @@ export class DefaultDict<K, V> extends Map<K, V> {
     this.default = defaultFunction;
   }
 
-  get(key: K) {
+  override get(key: K) {
     if (!this.has(key)) {
       this.set(key, this.default());
     }

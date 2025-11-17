@@ -10,10 +10,10 @@ import { VFile } from "vfile";
 import { matter } from "vfile-matter";
 import yaml from "yaml";
 
-import { filelist } from "./lib/filelist.ts";
-import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
-import { PostFrontmatter } from "./lib/schema.ts";
-import { FileListItem } from "./lib/types.ts";
+import { filelist } from "./lib/filelist";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import type { PostFrontmatter } from "./lib/schema";
+import type { FileListItem } from "./lib/types";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",
@@ -27,7 +27,7 @@ parser.add_argument("-o", "--out", {
   metavar: "FOLDER",
   default: "./out",
   nargs: "?",
-  help: "if `write` is specified, output a copy of files in `FOLDER`; set folder as `-` to overwrite the input files",
+  help: "if `write` is specified, output a copy of files in  `FOLDER`; set folder as `-` to overwrite the input files",
 });
 parser.add_argument("in", {
   metavar: "INPUT",

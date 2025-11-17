@@ -10,13 +10,16 @@ import { VFile } from "vfile";
 import { matter } from "vfile-matter";
 import yaml from "yaml";
 
-import { Frontmatter_astro_paper, post_cleanup } from "./lib/astro_paper.ts";
-import { filelist } from "./lib/filelist.ts";
-import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
-import { FileListItem } from "./lib/types.ts";
+import {
+  type Frontmatter_astro_paper,
+  post_cleanup,
+} from "./lib/astro_paper_v2";
+import { filelist } from "./lib/filelist";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import type { FileListItem } from "./lib/types";
 
 const parser = new ArgumentParser({
-  description: "Batch clean up frontmatters in Astro posts.",
+  description: "Batch convert Astro Paper v2.2 frontmatter to my schema.",
 });
 parser.add_argument("-w", "--write", {
   default: false,

@@ -6,11 +6,11 @@ import { inspect, isDeepStrictEqual } from "node:util";
 import { read } from "to-vfile";
 import { matter } from "vfile-matter";
 
-import { DefaultDict } from "./lib/DefaultDict.ts";
-import { filelist } from "./lib/filelist.ts";
-import { normalize_frontmatter } from "./lib/normalize_frontmatter.ts";
-import { PostFrontmatter } from "./lib/schema.ts";
-import { FileListItem, Frontmatter } from "./lib/types.ts";
+import { DefaultDict } from "./lib/DefaultDict";
+import { filelist } from "./lib/filelist";
+import { normalize_frontmatter } from "./lib/normalize_frontmatter";
+import type { PostFrontmatter } from "./lib/schema";
+import type { FileListItem, Frontmatter } from "./lib/types";
 
 const parser = new ArgumentParser({
   description: "Batch clean up frontmatters in posts.",

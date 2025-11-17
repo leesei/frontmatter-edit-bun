@@ -13,7 +13,7 @@ bun install
 # query on tags
 ./tags-query.ts <folder>
 
-# convert default Astro Paper schema to my schema
+# convert default Astro Paper v2.2 schema to my schema
 ./astro-paper <folder>
 ```
 

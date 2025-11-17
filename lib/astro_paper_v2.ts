@@ -11,7 +11,7 @@ export function post_cleanup(matter: Frontmatter_astro_paper) {
   let { title, pubDatetime, tags, postSlug, ...rest } = matter;
 
   // remove time from `date` field
-  const created = pubDatetime.split("T")[0];
+  const created = pubDatetime.split("T")[0]!;
 
   return {
     title,

@@ -1,6 +1,6 @@
 import { tags_to_valid_set } from "./helpers.ts";
-import { PostFrontmatter } from "./schema.ts";
-import { Frontmatter } from "./types.ts";
+import type { PostFrontmatter } from "./schema.ts";
+import type { Frontmatter } from "./types.ts";
 
 // sort keys in `frontmatter` object
 // make `tags` unique and sorted
