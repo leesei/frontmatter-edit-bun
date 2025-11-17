@@ -10,8 +10,11 @@ bun install
 ./batch-cleanup.ts <file|folder>
 # update `updated` in frontmatter according to file's update time
 ./update-updated.ts <file|folder>
+
 # query on tags
 ./tags-query.ts <folder>
+# remove formatting escape sequences (Bun issue #24707)
+./tags-query.ts <folder> | sed -r 's/\x1b\[[0-9;]*m?//g' > 1.log
 
 # convert default Astro Paper v2.2 schema to my schema
 ./astro-paper <folder>
@@ -35,9 +38,34 @@ Like `unified`, this repo provides sample and framework for you to write your ow
   - `gray-matter.stringify()` clones frontmatter and messed up my ordering
   - dependency `js-yaml` is too old and does not provide customization
 
+## Design
+
+1. prepare filelist from input
+2. read as `vfile`, parse frontmatter (only) to `vfile.data.matter`
+3. add these custom data to `vfile.data`
+
+```js
+{
+  write: boolean; // whether to write file
+  skip: boolean; // whether to skip processing of file
+  modified: Date; // mtime of file
+  orig: object; // copy of `vfile.data.matter`
+}
+```
+
+4. do the processing
+   - convert frontmatter schema
+   - format and normalize frontmatter
+   - update `updated` field
+   - ...
+
 ## TODO
 
-- fluent API like `unified`
+- fluent API like `unified`  
+  refactor into middleware for `unified.use()`  
+  store context in `vfile.data`  
+  return `undefined` to terminate pipeline  
+  keep stat for all files for reporting
 - "comp.lang" -> "comp/language", "comp/dev"
 - "comp.hardware" -> "comp/hardware"
 - "web-\*" -> "web/\*"
@@ -54,6 +82,7 @@ Like `unified`, this repo provides sample and framework for you to write your ow
 [nodeca/js-yaml: JavaScript YAML parser and dumper. Very fast.](https://github.com/nodeca/js-yaml)
 
 use `unified-engine`?
+[Using plugins - unified](https://unifiedjs.com/learn/guide/using-plugins/)
 [unified-args - unified](https://unifiedjs.com/explore/package/unified-args/)
 [unified-engine - unified](https://unifiedjs.com/explore/package/unified-engine/)
 
